@@ -23,36 +23,53 @@ void check(const Compressor& comp, const std::string& filePath) {
 }
 
 TEST_CASE("Testing RLE against Corpus Files") {
-    RLE compressor;
-    std::string testDir = "./inputs";
-
+    std::string testDir = "../inputs";
     if (!fs::exists(testDir)) {
         MESSAGE("Test directory not found, skipping file tests.");
         return;
     }
 
-    for (const auto& entry : fs::directory_iterator(testDir)) {
-        SUBCASE(entry.path().filename().string().c_str()) {
-            check(compressor, entry.path().string());
+    static std::vector<fs::path> testFiles;
+    if (testFiles.empty() && fs::exists(testDir)) {
+        for (const auto& entry : fs::recursive_directory_iterator(testDir)) {
+            if (fs::is_regular_file(entry)) testFiles.push_back(entry.path());
+        }
+    }
+    
+    auto& registry = Compressor::getRegistry();
+    for (auto const& [name, creator] : registry) {
+        SUBCASE(name.c_str()) {
+            auto c = creator();
+
+            for (const auto& path : testFiles) {
+                SUBCASE(path.filename().string().c_str()) {
+                    check(*c, path.string());
+                }
+            }
         }
     }
 }
 
 TEST_CASE("Edge Cases") {
-    RLE compressor;
+    auto& registry = Compressor::getRegistry();
+    for (auto const& [name, creator] : registry) {
+        SUBCASE(name.c_str()) {
+            auto c = creator();
 
-    SUBCASE("Empty input") {
-        std::vector<uint8_t> in = {};
-        CHECK(compressor.decode(compressor.encode(in)) == in);
-    }
+            SUBCASE("Empty input") {
+                std::vector<uint8_t> in = {};
+                CHECK(c->decode(c->encode(in)) == in);
+            }
 
-    SUBCASE("Single byte") {
-        std::vector<uint8_t> in = { 'A' };
-        CHECK(compressor.decode(compressor.encode(in)) == in);
-    }
+            SUBCASE("Single byte") {
+                std::vector<uint8_t> in = { 'A' };
+                CHECK(c->decode(c->encode(in)) == in);
+            }
 
-    SUBCASE("Long run (>255 bytes)") {
-        std::vector<uint8_t> in(500, 'Z');
-        CHECK(compressor.decode(compressor.encode(in)) == in);
+            SUBCASE("Long run (>255 bytes)") {
+                std::vector<uint8_t> in(500, 'Z');
+                CHECK(c->decode(c->encode(in)) == in);
+            }
+        }
     }
 }

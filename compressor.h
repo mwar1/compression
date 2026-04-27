@@ -3,6 +3,10 @@
 
 #include <vector>
 #include <cstdint>
+#include <map>
+#include <string>
+#include <functional>
+#include <memory>
 
 class Compressor {
 public:
@@ -10,12 +14,9 @@ public:
 
     virtual std::vector<uint8_t> encode(const std::vector<uint8_t>& data) const = 0;
     virtual std::vector<uint8_t> decode(const std::vector<uint8_t>& data) const = 0;
-};
 
-class RLE : public Compressor {
-public:
-    std::vector<uint8_t> encode(const std::vector<uint8_t>& txt) const override;
-    std::vector<uint8_t> decode(const std::vector<uint8_t>& txt) const override;
+    using Registry = std::map<std::string, std::function<std::unique_ptr<Compressor>()>>;
+    static Registry& getRegistry();
 };
 
 #endif
