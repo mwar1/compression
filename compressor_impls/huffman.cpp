@@ -1,7 +1,6 @@
 #include "../compressor.h"
 
 #include <queue>
-#include <iostream>
 #include <numeric>
 #include <map>
 #include <fstream>
@@ -20,16 +19,6 @@ struct NodeCompare {
         return a->freq > b->freq;
     }
 };
-
-std::vector<int> get_freqs(const std::vector<uint8_t>& txt) {
-    std::vector<int> counts(256, 0);
-
-    for (uint8_t c : txt) {
-        counts[c]++;
-    }
-
-    return counts;
-}
 
 std::priority_queue<Node*, std::vector<Node*>, NodeCompare> init_queue(std::vector<int>& counts) {
     std::priority_queue<Node*, std::vector<Node*>, NodeCompare> q;
@@ -85,13 +74,6 @@ void get_encoding(Node *root, uint64_t current_code, size_t depth, std::vector<C
 
     get_encoding(root->left, (current_code << 1) | 0, depth+1, encoding);
     get_encoding(root->right, (current_code << 1) | 1, depth+1, encoding);
-}
-
-// Write the original size of the input, little-endian
-void write_size(std::vector<uint8_t>& f, uint64_t sz) {
-    for (int i=0; i<8; i++) {
-        f.push_back(static_cast<uint8_t>((sz >> (i * 8)) & 0xFF));
-    }
 }
 
 // Write the frequency of each character, to allow reconstruction later

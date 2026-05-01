@@ -19,4 +19,8 @@ public:
     static Registry& getRegistry();
 };
 
+void write_size(std::vector<uint8_t>& f, uint64_t sz);
+std::vector<int> get_freqs(const std::vector<uint8_t>& txt);
+std::vector<uint32_t> get_cum_freq(const std::vector<uint8_t>& txt);
+
 #endif

@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <numeric>
-#include <iostream>
 
 // Working range
 #define RANGE_BITS 32
@@ -10,27 +9,6 @@ static_assert(RANGE_BITS <= 32 && RANGE_BITS >= 24, "Working range must be betwe
 
 // Threshold under which to output a byte
 const uint32_t THRESH = (1 << (RANGE_BITS - 8)) ;
-
-/* cum_freq[i] is the total frequencies of the characters before character i
-   cum_freq[i+1] is the total frequencies of characters up to and including character i */
-std::vector<uint32_t> get_cum_freq(const std::vector<uint8_t>& txt) {
-    std::vector<uint32_t> counts(256, 0);
-
-    for (uint8_t c : txt) {
-        counts[c]++;
-    }
-
-    std::vector<uint32_t> cum_freq(257, 0);
-    for (uint32_t i = 0; i < 256; i++) {
-        cum_freq[i + 1] = cum_freq[i] + counts[i];
-    }
-
-    return cum_freq;
-}
-
-double get_probs_to(uint8_t c, std::vector<double>& probs) {
-    return std::accumulate(probs.begin(), std::next(probs.begin(), c), 0.0);
-}
 
 void adjust_range(uint8_t c, std::vector<uint32_t>& cum_freq, uint32_t len, uint32_t& low, uint32_t& range) {
     uint64_t slice_low   = (static_cast<uint64_t>(range) *cum_freq[c]) / len;
@@ -56,13 +34,6 @@ void emit_byte(uint32_t byte, std::vector<uint8_t>& out, uint8_t& cache, uint32_
     }
 }
 
-// Write the original size of the input, little-endian
-void write_size2(std::vector<uint8_t>& f, uint64_t sz) {
-    for (int i=0; i<8; i++) {
-        f.push_back(static_cast<uint8_t>((sz >> (i * 8)) & 0xFF));
-    }
-}
-
 class Range_Enc : public Compressor {
 public:
     std::vector<uint8_t> encode(const std::vector<uint8_t>& txt) const override {
@@ -70,7 +41,7 @@ public:
         if (txt.empty()) return out;
 
         const uint32_t len = txt.size();
-        write_size2(out, len);
+        write_size(out, len);
 
         std::vector<uint32_t> cum_freq = get_cum_freq(txt);
 
