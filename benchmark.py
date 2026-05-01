@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 
 CORPUS_DIR = "./inputs"
-ALGORITHMS = ["RLE", "Huffman"]
+ALGORITHMS = ["RLE", "Huffman", "Range"]
 RESULTS_FILE = "benchmark_results.csv"
 OUTPUT_FILE = "out.comp"
 
