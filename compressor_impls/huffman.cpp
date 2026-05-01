@@ -59,6 +59,13 @@ Node* create_tree(std::priority_queue<Node*, std::vector<Node*>, NodeCompare> q)
     return root;
 }
 
+void delete_tree(Node* root) {
+    if (!root) return;
+    delete_tree(root->left);
+    delete_tree(root->right);
+    delete root;
+}
+
 struct Code {
     uint64_t bits = 0;
     size_t length = 0;
@@ -76,12 +83,39 @@ void get_encoding(Node *root, uint64_t current_code, size_t depth, std::vector<C
     get_encoding(root->right, (current_code << 1) | 1, depth+1, encoding);
 }
 
-// Write the frequency of each character, to allow reconstruction later
-// little-endian
+// Write the length of the code used for each character
+// Only include characters which appear at least once, using a bitmask
 void write_freqs(std::vector<uint8_t>& f, std::vector<int> counts) {
-    for (int freq : counts) {
-        for (int i = 0; i < 4; ++i) {
-            f.push_back(static_cast<uint8_t>((freq >> (i * 8)) & 0xFF));
+    // Mask defines which characters have a non-zero count
+    // Interpreted as a 256-bit binary mask
+    uint8_t mask[32] = {0};
+    for (int c=0; c<256; c++) {
+        if (counts[c] > 0)
+            mask[c / 8] |= (1 << (c % 8));
+    }
+    for (uint8_t m : mask) f.push_back(m);
+
+    for (uint32_t c = 0; c < 256; c++) {
+        if (mask[c / 8] & (1 << (c % 8))) {
+            for (int j = 0; j < 4; ++j) {
+                f.push_back(static_cast<uint8_t>((counts[c] >> (j * 8)) & 0xFF));
+            }
+        }
+    }
+}
+
+void write_lengths(std::vector<uint8_t>& f, const std::vector<Code>& enc) {
+    // 1. Write the 32-byte mask as you do now
+    uint8_t mask[32] = {0};
+    for (int i = 0; i < 256; i++) {
+        if (enc[i].length > 0) mask[i / 8] |= (1 << (i % 8));
+    }
+    for (uint8_t m : mask) f.push_back(m);
+
+    // 2. Write 1 byte for the length of each active character
+    for (int i = 0; i < 256; i++) {
+        if (enc[i].length > 0) {
+            f.push_back(static_cast<uint8_t>(enc[i].length));
         }
     }
 }
@@ -102,7 +136,6 @@ public:
         std::vector<Code> enc(256);
         get_encoding(root, 0, 0, enc);
 
-        // This could be improved by only writing the characters used in the message
         uint8_t buf = 0;
         size_t buf_len = 0;
         for (uint8_t c : txt) {
@@ -127,6 +160,7 @@ public:
             out.push_back(buf);
         }
     
+        delete_tree(root);
         return out;
     }
     
@@ -134,21 +168,32 @@ public:
         std::vector<uint8_t> out;
         if (txt.empty()) return out;
 
+        // Get the original file size
         uint64_t original_sz = 0;
         for (int i=0; i<8; i++) {
             uint8_t byte = txt.at(i);
             original_sz |= (static_cast<uint64_t>(byte) << (i * 8));
         }
 
-        std::vector<int> counts(256, 0);
         size_t currentPos = 8;
+
+        // Read the encoder mask
+        uint8_t mask[32] = {0};
+        for (int i = 0; i < 32; i++) {
+            mask[i] = txt.at(currentPos++);
+        }
+
+        std::vector<int> counts(256, 0);
 
         for (int charIdx = 0; charIdx < 256; charIdx++) {
             int freq = 0;
-            for (int byteIdx = 0; byteIdx < 4; byteIdx++) {
-                uint8_t b = txt.at(currentPos++);
-                freq |= (static_cast<int>(b) << (byteIdx * 8));
+            if (mask[charIdx / 8] & (1 << (charIdx % 8))) {
+                for (int byteIdx = 0; byteIdx < 4; byteIdx++) {
+                    uint8_t b = txt.at(currentPos++);
+                    freq |= (static_cast<int>(b) << (byteIdx * 8));
+                }
             }
+
             counts[charIdx] = freq;
         }
 
@@ -174,6 +219,7 @@ public:
             }
         }
     
+        delete_tree(root);
         return out;
     }
 };
@@ -182,3 +228,4 @@ static bool registered = []() {
     Compressor::getRegistry()["Huffman"] = []() { return std::make_unique<Huffman>(); };
     return true;
 }();
+
