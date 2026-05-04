@@ -10,12 +10,22 @@ make
 ```
 
 ## Running
-Once built, the compressor can be run from **inside `build/`** with:
+Once built, the compressor executable can be run from **inside `build/`**.
 ```bash
-./compresor <algo> <input> <output>
+Usage: compressor [--help] [--version] [--list] [--decompress] algo input output
+
+Positional arguments:
+  algo              Compression algorithm to use [nargs=0..1] [default: ""]
+  input             Input file path [nargs=0..1] [default: ""]
+  output            Output file path [nargs=0..1] [default: ""]
+
+Optional arguments:
+  -h, --help        shows help message and exits 
+  -v, --version     prints version information and exits 
+  --list            List all available compression algorithms 
+  -d, --decompress  Run in decompression mode
 ```
 
-At the moment, it only supports compression. Later development will add a decompression flag to this executable. 
 
 ## Testing
 Once built, the test suite can be run from **inside `build/`** with:
