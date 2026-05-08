@@ -12,20 +12,19 @@ make
 ## Running
 Once built, the compressor executable can be run from **inside `build/`**.
 ```bash
-Usage: compressor [--help] [--version] [--list] [--decompress] algo input output
-
-Positional arguments:
-  algo              Compression algorithm to use [nargs=0..1] [default: ""]
-  input             Input file path [nargs=0..1] [default: ""]
-  output            Output file path [nargs=0..1] [default: ""]
+Usage: compressor [--help] [--version] {compress,decompress,list}
 
 Optional arguments:
-  -h, --help        shows help message and exits 
-  -v, --version     prints version information and exits 
-  --list            List all available compression algorithms 
-  -d, --decompress  Run in decompression mode
+  -h, --help     shows help message and exits 
+  -v, --version  prints version information and exits 
+
+Subcommands:
+  compress      
+  decompress    
+  list          List all available compression algorithms
 ```
 
+Compression and decompression require three arguments: `algo`, `input` and `output`.
 
 ## Testing
 Once built, the test suite can be run from **inside `build/`** with:
