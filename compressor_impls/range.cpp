@@ -65,7 +65,7 @@ void rescale_fenwick(std::vector<uint32_t>& tree) {
     build_fenwick(tree);
 }
 
-void adjust_range(uint8_t c, std::vector<uint32_t>& cum_freq, uint32_t& low, uint32_t& range) {
+void adjust_range(uint8_t c, std::vector<uint32_t>& cum_freq, uint64_t& low, uint32_t& range) {
     uint32_t total_freq = query_fenwick(cum_freq, 256);
 
     uint32_t freq_low  = query_fenwick(cum_freq, c);
@@ -110,7 +110,7 @@ public:
 
         build_fenwick(cum_freq);
 
-        uint32_t low = 0;
+        uint64_t low = 0;
         uint32_t range = (RANGE_BITS == 32) ? ~0U : (1U << RANGE_BITS) - 1;
 
         uint8_t cache = 0;
@@ -132,9 +132,9 @@ public:
             }
 
             while (range < THRESH) {
-                emit_byte(low >> (RANGE_BITS - 8), out, cache, cache_size);
-
-                low   <<= 8;
+                emit_byte(static_cast<uint32_t>(low >> 24), out, cache, cache_size);
+                
+                low = (low << 8) & 0xFFFFFFFFULL;
                 range <<= 8;
             }
         }
@@ -144,16 +144,91 @@ public:
             uint8_t b = static_cast<uint8_t>(low >> 24);
             
             emit_byte(b, out, cache, cache_size);
-            low <<= 8;
+            low = (low << 8) & 0xFFFFFFFFULL;
         }
+
+        out.push_back(cache);
+        for (; cache_size > 0; cache_size--) out.push_back(0xFF);
     
         return out;
     }
     
     std::vector<uint8_t> decode(const std::vector<uint8_t>& txt) const override {
         std::vector<uint8_t> out;
-    
-        return txt;
+        if (txt.empty()) return out;
+
+        uint64_t original_sz = 0;
+        for (int i=0; i<8; i++) {
+            uint8_t byte = txt.at(i);
+            original_sz |= (static_cast<uint64_t>(byte) << (i * 8));
+        }
+
+        size_t currentPos = 8;
+
+        std::vector<uint32_t> cum_freq(257, 1);
+        cum_freq[0] = 0;
+        build_fenwick(cum_freq);
+
+        uint32_t range = (RANGE_BITS == 32) ? ~0U : (1U << RANGE_BITS) - 1;
+
+        // Initialise the tracking value with 5 bytes to discard the dummy byte
+        uint32_t value = 0;
+        for (int i = 0; i < 5; ++i) {
+            value = (value << 8) | (currentPos < txt.size() ? txt[currentPos++] : 0);
+        }
+
+        for (size_t i = 0; i < original_sz; i++) {
+            uint32_t total_freq = query_fenwick(cum_freq, 256);
+            
+            int l = 0, r = 255;
+            uint8_t c = 0;
+            uint32_t c_low = 0, c_range = 0;
+
+            // Find the character
+            while (l <= r) {
+                int mid = l + (r - l) / 2;
+                uint32_t f_low  = query_fenwick(cum_freq, mid);
+                uint32_t f_high = query_fenwick(cum_freq, mid + 1);
+
+                uint64_t s_low  = (static_cast<uint64_t>(range) * f_low) / total_freq;
+                uint64_t s_next = (static_cast<uint64_t>(range) * f_high) / total_freq;
+
+                if (value >= s_low) {
+                    if (value < s_next) {
+                        c = static_cast<uint8_t>(mid);
+                        c_low = static_cast<uint32_t>(s_low);
+                        c_range = static_cast<uint32_t>((static_cast<uint64_t>(range) * (f_high - f_low)) / total_freq);
+                        break;
+                    } else {
+                        l = mid + 1;
+                    }
+                } else {
+                    r = mid - 1;
+                }
+            }
+
+            out.push_back(c);
+
+            // Subtract the symbol's lower bound to consume it
+            value -= c_low;
+            range = c_range;
+
+            update_fenwick(cum_freq, c);
+
+            if (query_fenwick(cum_freq, 256) > RESCALE_LIM) {
+                rescale_fenwick(cum_freq);
+            }
+
+            while (range < THRESH) {
+                range <<= 8;
+                value <<= 8;
+                if (currentPos < txt.size()) {
+                    value |= txt[currentPos++];
+                }
+            }
+        }
+
+        return out;
     }
 };
 
