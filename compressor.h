@@ -8,6 +8,13 @@
 #include <functional>
 #include <memory>
 
+class Compressor;
+
+struct AlgoEntry {
+    std::function<std::unique_ptr<Compressor>()> creator;
+    bool visible = true;
+};
+
 class Compressor {
 public:
     virtual ~Compressor() = default;
@@ -15,7 +22,7 @@ public:
     virtual std::vector<uint8_t> encode(const std::vector<uint8_t>& data) const = 0;
     virtual std::vector<uint8_t> decode(const std::vector<uint8_t>& data) const = 0;
 
-    using Registry = std::map<std::string, std::function<std::unique_ptr<Compressor>()>>;
+    using Registry = std::map<std::string, AlgoEntry>;
     static Registry& getRegistry();
 };
 

@@ -233,6 +233,8 @@ public:
 };
 
 static bool registered = []() {
-    Compressor::getRegistry()["Range"] = []() { return std::make_unique<Range_Enc>(); };
+    Compressor::getRegistry()["Range"] = {
+        []() { return std::make_unique<Range_Enc>(); }
+    };
     return true;
 }();

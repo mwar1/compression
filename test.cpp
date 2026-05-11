@@ -37,9 +37,9 @@ TEST_CASE("Testing against Corpus Files") {
     }
     
     auto& registry = Compressor::getRegistry();
-    for (auto const& [name, creator] : registry) {
+    for (auto const& [name, entry] : registry) {
         SUBCASE(name.c_str()) {
-            auto c = creator();
+            auto c = entry.creator();
 
             for (const auto& path : testFiles) {
                 SUBCASE(path.filename().string().c_str()) {
@@ -52,9 +52,9 @@ TEST_CASE("Testing against Corpus Files") {
 
 TEST_CASE("Edge Cases") {
     auto& registry = Compressor::getRegistry();
-    for (auto const& [name, creator] : registry) {
+    for (auto const& [name, entry] : registry) {
         SUBCASE(name.c_str()) {
-            auto c = creator();
+            auto c = entry.creator();
 
             SUBCASE("Empty input") {
                 std::vector<uint8_t> in = {};

@@ -225,7 +225,9 @@ public:
 };
 
 static bool registered = []() {
-    Compressor::getRegistry()["Huffman"] = []() { return std::make_unique<Huffman>(); };
+    Compressor::getRegistry()["Huffman"] = {
+        []() { return std::make_unique<Huffman>(); }
+    };
     return true;
 }();
 

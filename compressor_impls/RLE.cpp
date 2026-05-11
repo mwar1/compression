@@ -42,6 +42,8 @@ public:
 };
 
 static bool registered = []() {
-    Compressor::getRegistry()["RLE"] = []() { return std::make_unique<RLE>(); };
+    Compressor::getRegistry()["RLE"] = {
+        []() { return std::make_unique<RLE>(); }
+    };
     return true;
 }();

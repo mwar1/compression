@@ -11,15 +11,19 @@ void display_algos() {
     if (registry.empty()) {
         std::cout << "No algorithms found." << std::endl;
     } else {
-        for (auto const& [name, creator] : registry) {
-            std::cout << "- " << name << std::endl;
+        for (auto const& [name, entry] : registry) {
+            if (entry.visible) {
+                std::cout << "- " << name << std::endl;
+            }
         }
     }
 }
 
 int transform(const std::string& algo, const std::string& input_path, const std::string& output_path, bool compress) {
     auto& registry = Compressor::getRegistry();
-    if (registry.find(algo) == registry.end()) {
+    auto it = registry.find(algo);
+
+    if (it == registry.end() || !it->second.visible) {
         std::cerr << "Algorithm " << algo << " not found." << std::endl;
         return 1;
     }
@@ -33,7 +37,7 @@ int transform(const std::string& algo, const std::string& input_path, const std:
     std::vector<uint8_t> input_bytes((std::istreambuf_iterator<char>(in_file)), std::istreambuf_iterator<char>());
     in_file.close();
 
-    auto c = registry.at(algo)();
+    auto c = registry.at(algo).creator();
     std::vector<uint8_t> output;
 
     if (compress) {
