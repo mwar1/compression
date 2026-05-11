@@ -25,7 +25,7 @@ def run_benchmark():
                 start = time.perf_counter()
                 
                 # Reuses the same output file between runs
-                subprocess.run(["./build/compressor", algo, filename, OUTPUT_FILE], capture_output=True)
+                subprocess.run(["./build/compressor", "compress", algo, filename, OUTPUT_FILE], capture_output=True)
                 
                 end = time.perf_counter()
                 

@@ -22,7 +22,7 @@ void check(const Compressor& comp, const std::string& filePath) {
     CHECK(original == decoded);
 }
 
-TEST_CASE("Testing RLE against Corpus Files") {
+TEST_CASE("Testing against Corpus Files") {
     std::string testDir = "../inputs";
     if (!fs::exists(testDir)) {
         MESSAGE("Test directory not found, skipping file tests.");
