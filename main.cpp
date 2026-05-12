@@ -1,4 +1,5 @@
 #include "compressor.h"
+#include "version.h"
 
 #include <iostream>
 #include <fstream>
@@ -60,7 +61,7 @@ int transform(const std::string& algo, const std::string& input_path, const std:
 }
 
 int main(int argc, char* argv[]) {
-    argparse::ArgumentParser program("compressor");
+    argparse::ArgumentParser program("compressor", PROJECT_VERSION);
 
     // Subcommands
     argparse::ArgumentParser list_command("list");
