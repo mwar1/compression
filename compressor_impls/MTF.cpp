@@ -1,6 +1,5 @@
 #include "../compressor.h"
 
-#include <algorithm>
 #include <numeric>
 
 /*
@@ -39,15 +38,28 @@ public:
     
     std::vector<uint8_t> decode(const std::vector<uint8_t>& txt) const override {
         std::vector<uint8_t> out;
+
+        std::vector<uint8_t> alphabet(256, 0);
+        std::iota(alphabet.begin(), alphabet.end(), 0);
+
+        for (uint8_t b : txt) {
+            uint8_t character = alphabet[b];
+            out.push_back(character);
+
+            for (int i = b; i > 0; i--) {
+                alphabet[i] = alphabet[i - 1];
+            }
+            alphabet[0] = character;
+        }
     
-        return txt;
+        return out;
     }
 };
 
 static bool registered = []() {
     Compressor::getRegistry()["MTF"] = {
         []() { return std::make_unique<MTF>(); },
-        true
+        false
     };
     return true;
 }();
