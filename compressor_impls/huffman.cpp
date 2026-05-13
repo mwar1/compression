@@ -3,7 +3,6 @@
 #include <queue>
 #include <numeric>
 #include <map>
-#include <fstream>
 
 struct Node {
     uint8_t data;
