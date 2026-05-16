@@ -27,13 +27,19 @@ Subcommands:
 Compression and decompression require three arguments: `algo`, `input` and `output`.
 
 ## Testing
-Once built, the test suite can be run from **inside `build/`** with:
+Once built, the test suite can be run from **inside `build/`**.
 ```bash
-./run_tests
+Usage: run_tests [--help] [--algo=<name>] [doctest_options]
+
+Optional arguments:
+  -h, --help        shows help message and exits 
+  --algo=<name>     filters the test suite to run only the specified algorithm
+
+Doctest options:
+  [doctest_options] passes through native doctest options
 ```
 
-As it stands, this runs all implementations in `compressor_impls/` against all test files in `inputs/`. Most of the test inputs are from the [Canterbury Corpus](https://corpus.canterbury.ac.nz/), apart from the images which are custom made. 
-Future work will ideally update this to target certain implementations.
+By default (i.e. without the `algo` argument), this runs all implementations in `compressor_impls/` against all test files in `inputs/`.  Most of the test inputs are from the [Canterbury Corpus](https://corpus.canterbury.ac.nz/), apart from the images which are custom made.
 
 ## Benchmarking
 `benchmark.py` is provided as a fairly rudimentary benchmarking script. It runs all implementations in `compressor_impls/` against all test files in `inputs/`, recording time taken and compression ratio for each. Importantly, the project must be built before the benchmark script can be run, to allow the compression executable to be created.
